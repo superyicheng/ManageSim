@@ -17,25 +17,66 @@ Server (Discord) → Department (Channel) → Team (Bot) → Agent (Worker)
 - **Creators** — Easy department/agent creation via Discord commands
 - **Skills** — Online skill discovery from curated repos + ClawHub
 
-## Quick Start
+## Install
+
+One line to download and set up ManageSim:
 
 ```bash
-# 1. Install dependencies
-make setup
+curl -sSL https://raw.githubusercontent.com/superyicheng/ManageSim/main/scripts/install-managesim | bash
+```
 
-# 2. Create personal config (Discord IDs, API keys)
+Or install to a specific directory:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/superyicheng/ManageSim/main/scripts/install-managesim | bash -s ~/projects
+```
+
+This clones the repo, installs all dependencies, and adds the `update-managesim` command to your PATH.
+
+## Update
+
+One line to update ManageSim to the latest version (run from anywhere):
+
+```bash
+update-managesim
+```
+
+This pulls the latest code, updates dependencies, and re-initializes the hierarchy. Your personal config (`config/managesim.yaml`), API keys (`.env`), and stored data (`data/`) are never touched.
+
+## Quick Start
+
+After installing:
+
+```bash
+cd ~/ManageSim
+
+# 1. Create personal config (Discord IDs, API keys)
 ./scripts/init-personal.sh
 
-# 3. Edit your config
+# 2. Edit your config
 $EDITOR config/managesim.yaml
 $EDITOR .env
 
-# 4. Bootstrap Easybase hierarchy
+# 3. Bootstrap Easybase hierarchy
 ./scripts/init-hierarchy.sh
 
-# 5. Start services
+# 4. Start services
 docker-compose up
 ```
+
+## Department Structure
+
+Every project channel gets 5 teams automatically:
+
+```
+Leader (Main Team) — builds the work
+├── QA Team            — validates individual deliverables
+├── Error-Learning     — traces root causes, stores lessons
+├── Test Team          — writes & runs full test plans (integration, regression, e2e)
+└── Error Feedback     — collects reports from all teams, tracks patterns, ensures fixes
+```
+
+Each team has auto-created lead agents. Leaders receive a **Leader Guide** with the project structure, decision framework, communication standards, and first actions checklist.
 
 ## Config
 
