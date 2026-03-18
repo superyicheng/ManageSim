@@ -1,0 +1,42 @@
+[
+  {
+    "id": "gene_decision_quality",
+    "name": "Decision Quality",
+    "description": "Improve quality of task planning and delegation decisions",
+    "signal_types": ["error", "drift"],
+    "mutation_template": "Add decision evaluation criteria to soul.md",
+    "soul_additions": ["## Decision Framework", "- Evaluate options against project goals before deciding", "- Consider resource constraints and team capabilities"],
+    "claude_additions": ["Before delegating: verify agent has required skills"],
+    "personality_adjustments": { "rigor": 0.05, "creativity": -0.02 }
+  },
+  {
+    "id": "gene_resource_allocation",
+    "name": "Resource Allocation",
+    "description": "Better distribute tasks across available agents",
+    "signal_types": ["drift", "improvement"],
+    "mutation_template": "Optimize task distribution patterns",
+    "soul_additions": ["## Resource Awareness", "- Track agent workload before assigning"],
+    "claude_additions": ["Check agent availability before assignment"],
+    "personality_adjustments": { "rigor": 0.03 }
+  },
+  {
+    "id": "gene_delegation_accuracy",
+    "name": "Delegation Accuracy",
+    "description": "Match tasks to agents with appropriate skills",
+    "signal_types": ["error", "improvement"],
+    "mutation_template": "Improve task-to-agent matching",
+    "soul_additions": ["## Delegation Rules", "- Match task requirements to agent specializations"],
+    "claude_additions": [],
+    "personality_adjustments": { "creativity": 0.03 }
+  },
+  {
+    "id": "gene_vision_alignment",
+    "name": "Vision Alignment",
+    "description": "Ensure all tasks and decisions align with the department's long-term vision",
+    "signal_types": ["drift", "error"],
+    "mutation_template": "Strengthen vision-checking before task approval",
+    "soul_additions": ["## Vision Check", "- Before approving any task: verify it aligns with vision.md", "- Propose direction adjustments when detecting drift"],
+    "claude_additions": ["Always check vision.md before approving plans or tasks"],
+    "personality_adjustments": { "rigor": 0.03, "creativity": 0.02 }
+  }
+]

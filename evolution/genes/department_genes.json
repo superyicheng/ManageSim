@@ -1,0 +1,32 @@
+[
+  {
+    "id": "gene_info_coverage",
+    "name": "Information Coverage",
+    "description": "Collect more comprehensive information for the department",
+    "signal_types": ["stagnation", "improvement"],
+    "mutation_template": "Expand information collection scope",
+    "soul_additions": ["## Information Goals", "- Cover all relevant sources", "- Maintain freshness of collected data"],
+    "claude_additions": [],
+    "personality_adjustments": { "creativity": 0.05, "risk_tolerance": 0.03 }
+  },
+  {
+    "id": "gene_data_freshness",
+    "name": "Data Freshness",
+    "description": "Keep department knowledge up to date",
+    "signal_types": ["stagnation", "drift"],
+    "mutation_template": "Improve data update frequency",
+    "soul_additions": ["## Data Currency", "- Flag stale information", "- Schedule regular updates"],
+    "claude_additions": ["Check data timestamps before using cached information"],
+    "personality_adjustments": { "rigor": 0.03 }
+  },
+  {
+    "id": "gene_collection_protocol",
+    "name": "Collection Protocol",
+    "description": "Better organize and structure collected information",
+    "signal_types": ["improvement", "drift"],
+    "mutation_template": "Standardize information collection format",
+    "soul_additions": ["## Collection Standards", "- Use consistent tagging", "- Include source attribution"],
+    "claude_additions": [],
+    "personality_adjustments": { "rigor": 0.05, "verbosity": 0.02 }
+  }
+]

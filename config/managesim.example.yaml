@@ -1,0 +1,49 @@
+version: "1.0"
+
+discord:
+  guild_id: "<your-guild-id>"
+
+settings:
+  easybase:
+    base_dir: "~/.easybase"
+    auto_record: true
+  mem0:
+    storage: local
+    local_path: ./data/mem0
+  default_llm: "claude-sonnet-4-20250514"
+  default_visibility: public
+
+server:
+  name: "My Agent Server"
+  soul_template: templates/server_soul.md
+  claude_template: null
+
+personal_assistant:
+  bot_token_env: DISCORD_BOT_TOKEN_PERSONAL
+  name: "Assistant"
+  channels: "all"
+  capabilities: [general_qa, cross_project, delegate_to_project, asset_query]
+
+projects:
+  - id: example-research
+    name: "Example Research Project"
+    discord_channel_id: "<id>"
+    bot_token_env: DISCORD_BOT_TOKEN_EXAMPLE_RESEARCH
+    team_template: research-team
+    pipeline: research
+    soul_template: templates/project_soul.md
+    stall_threshold_seconds: 300
+
+  - id: example-app
+    name: "Example App Project"
+    discord_channel_id: "<id>"
+    bot_token_env: DISCORD_BOT_TOKEN_EXAMPLE_APP
+    team_template: coding-team
+    pipeline: default
+    soul_template: templates/project_soul.md
+    stall_threshold_seconds: 180
+
+asset_base:
+  bot_token_env: DISCORD_BOT_TOKEN_ASSET
+  channel_id: "<id>"
+  storage_path: ./data/asset_base.db

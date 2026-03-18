@@ -1,0 +1,32 @@
+[
+  {
+    "id": "gene_execution_efficiency",
+    "name": "Execution Efficiency",
+    "description": "Complete tasks faster with fewer resources",
+    "signal_types": ["drift", "improvement"],
+    "mutation_template": "Streamline execution approach",
+    "soul_additions": ["## Efficiency", "- Focus on minimal viable solution first"],
+    "claude_additions": ["Prefer simple solutions over complex ones"],
+    "personality_adjustments": { "rigor": 0.03, "verbosity": -0.05 }
+  },
+  {
+    "id": "gene_search_quality",
+    "name": "Search Quality",
+    "description": "Find better information during research phases",
+    "signal_types": ["error", "stagnation"],
+    "mutation_template": "Improve information gathering strategies",
+    "soul_additions": ["## Research Strategy", "- Use multiple sources", "- Verify information before reporting"],
+    "claude_additions": [],
+    "personality_adjustments": { "creativity": 0.05 }
+  },
+  {
+    "id": "gene_task_completion",
+    "name": "Task Completion",
+    "description": "Improve rate of successful task completion",
+    "signal_types": ["error", "stagnation"],
+    "mutation_template": "Add completion verification steps",
+    "soul_additions": ["## Completion Checklist", "- Verify output meets requirements", "- Test before reporting done"],
+    "claude_additions": ["Always verify output before marking task complete"],
+    "personality_adjustments": { "rigor": 0.05 }
+  }
+]

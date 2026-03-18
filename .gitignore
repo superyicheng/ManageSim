@@ -1,0 +1,41 @@
+# Personal config (contains Discord IDs, API keys)
+config/managesim.yaml
+.env
+
+# Local data storage
+data/
+*.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Node
+node_modules/
+gateway/node_modules/
+evolution/node_modules/
+orchestrator/node_modules/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.docker/
+
+# Logs
+*.log
+logs/

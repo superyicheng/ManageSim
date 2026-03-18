@@ -1,0 +1,10 @@
+{
+  "name": "ManageSim Gateway",
+  "version": "1.0.0",
+  "description": "Discord gateway for ManageSim multi-agent system",
+  "bots": [],
+  "settings": {
+    "log_messages": true,
+    "auto_record_context": true
+  }
+}

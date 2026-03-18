@@ -1,0 +1,15 @@
+name: qa-team
+description: "QA and integration testing team — mandatory for every department"
+
+roles:
+  qa_lead:
+    archetype: qa_tester
+    count: 1
+    auto_create: true
+  qa_tester:
+    archetype: qa_tester
+    count: 0
+    auto_create: false
+
+mandatory: true
+purpose: "Check all developments for errors, run integration tests, validate structural fit"

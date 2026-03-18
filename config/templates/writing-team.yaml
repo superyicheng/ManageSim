@@ -1,0 +1,26 @@
+name: writing-team
+description: "Agent team for content and documentation projects"
+
+roles:
+  leader:
+    archetype: leader
+    count: 1
+    auto_create: true
+  writer:
+    archetype: worker
+    count: 0
+    auto_create: false
+  editor:
+    archetype: reviewer
+    count: 0
+    auto_create: false
+  qa_tester:
+    archetype: qa_tester
+    count: 1
+    auto_create: true
+  error_analyst:
+    archetype: error_analyst
+    count: 1
+    auto_create: true
+
+default_pipeline: simple

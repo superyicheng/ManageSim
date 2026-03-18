@@ -1,0 +1,14 @@
+{
+  "name": "managesim-evolution",
+  "version": "1.0.0",
+  "description": "Evolver-inspired agent evolution for ManageSim",
+  "main": "evolve.js",
+  "scripts": {
+    "start": "node evolve.js",
+    "evolve": "node evolve.js --once"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "yaml": "^2.3.0"
+  }
+}

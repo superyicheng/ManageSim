@@ -1,0 +1,26 @@
+name: simple
+description: "Simplified pipeline for small projects"
+
+states:
+  - Planning
+  - Executing
+  - Done
+  - Blocked
+  - Cancelled
+
+initial_state: Planning
+terminal_states: [Done, Cancelled]
+
+transitions:
+  Planning: [Executing, Cancelled]
+  Executing: [Done, Blocked, Cancelled]
+  Blocked: [Executing, Planning, Cancelled]
+
+review_gate:
+  enabled: false
+
+permissions:
+  planner: [worker]
+  worker: [qa_tester]
+  qa_tester: [worker, leader, error_analyst]
+  error_analyst: [worker, leader]

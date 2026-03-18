@@ -1,0 +1,34 @@
+name: research
+description: "Research-oriented pipeline with synthesis phase"
+
+states:
+  - Planning
+  - Review
+  - Research
+  - Synthesize
+  - Done
+  - Blocked
+  - Cancelled
+
+initial_state: Planning
+terminal_states: [Done, Cancelled]
+
+transitions:
+  Planning: [Review, Cancelled]
+  Review: [Research, Planning, Cancelled]
+  Research: [Synthesize, Blocked, Cancelled]
+  Synthesize: [Done, Research, Cancelled]
+  Blocked: [Research, Planning, Cancelled]
+
+review_gate:
+  enabled: true
+  max_rounds: 2
+  axes: [feasibility, completeness, risk, resources]
+
+permissions:
+  planner: [reviewer]
+  reviewer: [planner, researcher]
+  researcher: [synthesizer]
+  synthesizer: [qa_tester]
+  qa_tester: [synthesizer, leader, error_analyst]
+  error_analyst: [researcher, leader, reviewer]

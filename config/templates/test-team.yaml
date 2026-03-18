@@ -1,0 +1,15 @@
+name: test-team
+description: "Dedicated testing team — writes test plans, runs regression and integration tests, validates end-to-end behavior"
+
+roles:
+  test_lead:
+    archetype: test_lead
+    count: 1
+    auto_create: true
+  test_runner:
+    archetype: test_runner
+    count: 0
+    auto_create: false
+
+mandatory: true
+purpose: "Write test plans, create test suites, run regression and integration tests, validate end-to-end behavior across all teams' output"

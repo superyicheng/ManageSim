@@ -1,0 +1,15 @@
+name: error-feedback-team
+description: "Error feedback team — collects error reports from all teams, aggregates patterns, creates correction tickets, tracks resolution"
+
+roles:
+  error_feedback_lead:
+    archetype: error_feedback_lead
+    count: 1
+    auto_create: true
+  error_reporter:
+    archetype: error_reporter
+    count: 0
+    auto_create: false
+
+mandatory: true
+purpose: "Collect error reports from all teams, identify recurring patterns, create actionable correction tickets, track resolution and verify fixes are applied"

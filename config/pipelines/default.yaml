@@ -1,0 +1,41 @@
+name: default
+description: "Full task pipeline with mandatory review gate"
+
+states:
+  - Inbox
+  - Triage
+  - Planning
+  - Review
+  - Assigned
+  - Executing
+  - QA
+  - Done
+  - Blocked
+  - Cancelled
+
+initial_state: Inbox
+terminal_states: [Done, Cancelled]
+
+transitions:
+  Inbox: [Triage, Cancelled]
+  Triage: [Planning, Cancelled]
+  Planning: [Review, Cancelled]
+  Review: [Assigned, Planning, Cancelled]
+  Assigned: [Executing, Blocked, Cancelled]
+  Executing: [QA, Blocked, Cancelled]
+  QA: [Done, Executing, Cancelled]
+  Blocked: [Executing, Assigned, Review, Cancelled]
+
+review_gate:
+  enabled: true
+  max_rounds: 3
+  axes: [feasibility, completeness, risk, resources]
+
+permissions:
+  triage: [planner]
+  planner: [reviewer]
+  reviewer: [planner, dispatcher]
+  dispatcher: [worker]
+  worker: [qa_tester]
+  qa_tester: [worker, leader, error_analyst]
+  error_analyst: [worker, leader, reviewer]

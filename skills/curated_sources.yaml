@@ -1,0 +1,46 @@
+# Curated skill sources — pre-configured GitHub repos for skill import
+# These are searched when users run /skills search or /skills explore
+
+sources:
+  - repo: "obra/superpowers"
+    description: "Dev workflow skills for Claude"
+    category: development
+    skills:
+      - id: superpowers-code-review
+        name: "Code Review"
+        description: "Comprehensive code review with security and performance analysis"
+        tags: [code-review, security, performance]
+      - id: superpowers-git-ops
+        name: "Git Operations"
+        description: "Advanced git workflow management"
+        tags: [git, workflow, automation]
+      - id: superpowers-testing
+        name: "Test Generation"
+        description: "Auto-generate test cases from code"
+        tags: [testing, automation, quality]
+
+  - repo: "anthropics/skills"
+    description: "Official Anthropic document processing skills"
+    category: documents
+    skills:
+      - id: anthropic-pdf-analysis
+        name: "PDF Analysis"
+        description: "Extract and analyze content from PDF documents"
+        tags: [pdf, analysis, documents]
+      - id: anthropic-summarization
+        name: "Document Summarization"
+        description: "Summarize long documents with key points extraction"
+        tags: [summary, documents, extraction]
+
+  - repo: "ComposioHQ/awesome-claude-skills"
+    description: "Community-curated Claude skills"
+    category: community
+    skills:
+      - id: community-web-research
+        name: "Web Research"
+        description: "Systematic web research with source verification"
+        tags: [research, web, verification]
+      - id: community-data-viz
+        name: "Data Visualization"
+        description: "Generate charts and visualizations from data"
+        tags: [data, visualization, charts]

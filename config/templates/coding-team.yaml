@@ -1,0 +1,26 @@
+name: coding-team
+description: "Agent team for software development projects"
+
+roles:
+  leader:
+    archetype: leader
+    count: 1
+    auto_create: true
+  developer:
+    archetype: worker
+    count: 0
+    auto_create: false
+  reviewer:
+    archetype: reviewer
+    count: 0
+    auto_create: false
+  qa_tester:
+    archetype: qa_tester
+    count: 1
+    auto_create: true
+  error_analyst:
+    archetype: error_analyst
+    count: 1
+    auto_create: true
+
+default_pipeline: default

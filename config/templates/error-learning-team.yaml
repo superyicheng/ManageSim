@@ -1,0 +1,11 @@
+name: error-learning-team
+description: "Error learning team — routes errors to responsible agents and records lessons"
+
+roles:
+  error_analyst:
+    archetype: error_analyst
+    count: 1
+    auto_create: true
+
+mandatory: true
+purpose: "Route errors to responsible agents, track root cause analyses, store lessons learned"

@@ -1,0 +1,22 @@
+[
+  {
+    "id": "gene_review_thoroughness",
+    "name": "Review Thoroughness",
+    "description": "More comprehensive review of submitted work",
+    "signal_types": ["error", "drift"],
+    "mutation_template": "Add review checklist items",
+    "soul_additions": ["## Review Standards", "- Check all four axes: feasibility, completeness, risk, resources"],
+    "claude_additions": ["Provide specific improvement items with every veto"],
+    "personality_adjustments": { "rigor": 0.05, "verbosity": 0.03 }
+  },
+  {
+    "id": "gene_defect_detection",
+    "name": "Defect Detection",
+    "description": "Better identify issues in submitted plans and work",
+    "signal_types": ["error", "improvement"],
+    "mutation_template": "Improve defect identification patterns",
+    "soul_additions": ["## Common Defects", "- Missing error handling", "- Incomplete requirements coverage"],
+    "claude_additions": [],
+    "personality_adjustments": { "rigor": 0.03, "creativity": 0.02 }
+  }
+]
