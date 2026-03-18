@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ──────────────────────────────────────────────────
+# update-managesim
+#
+# Update ManageSim to the latest version.
+# Safe: never touches config/managesim.yaml, .env, or data/
+#
+# Usage (from anywhere):
+#   update-managesim
+# ──────────────────────────────────────────────────
+
+CONFIG_FILE="$HOME/.managesim"
+
+# Find ManageSim directory
+if [ -f "$CONFIG_FILE" ]; then
+    MANAGESIM_DIR="$(cat "$CONFIG_FILE")"
+elif [ -d "$HOME/ManageSim" ]; then
+    MANAGESIM_DIR="$HOME/ManageSim"
+else
+    echo "Cannot find ManageSim installation."
+    echo "Either run install-managesim first, or set the path:"
+    echo "  echo /path/to/ManageSim > ~/.managesim"
+    exit 1
+fi
+
+if [ ! -d "$MANAGESIM_DIR/.git" ]; then
+    echo "Not a git repo: $MANAGESIM_DIR"
+    exit 1
+fi
+
+cd "$MANAGESIM_DIR"
+
+echo ""
+echo "╔══════════════════════════════════════╗"
+echo "║       ManageSim — Update             ║"
+echo "╚══════════════════════════════════════╝"
+echo ""
+echo "Location: $MANAGESIM_DIR"
+echo ""
+
+# Show what will NOT be touched
+echo "Protected (will NOT be modified):"
+echo "  config/managesim.yaml   — your personal config"
+echo "  .env                    — your API keys"
+echo "  data/                   — your stored data"
+echo ""
+
+# 1. Pull latest code
+echo "[1/4] Pulling latest code..."
+BEFORE=$(git rev-parse HEAD)
+git pull --ff-only 2>/dev/null || {
+    echo "  Fast-forward failed. Trying rebase..."
+    git pull --rebase || {
+        echo "  ERROR: Could not pull. You may have local changes."
+        echo "  Run: cd $MANAGESIM_DIR && git status"
+        exit 1
+    }
+}
+AFTER=$(git rev-parse HEAD)
+
+if [ "$BEFORE" = "$AFTER" ]; then
+    echo "  Already up to date."
+else
+    echo "  Updated: $(git log --oneline "$BEFORE".."$AFTER" | wc -l | tr -d ' ') new commit(s)"
+fi
+
+# 2. Install/update Python dependencies
+echo "[2/4] Updating Python dependencies..."
+pip install -q -r pipeline/requirements.txt
+pip install -q -r knowledge/requirements.txt
+pip install -q -r asset_base/requirements.txt
+pip install -q -r tools/requirements.txt 2>/dev/null || true
+
+# 3. Install/update Node dependencies
+echo "[3/4] Updating Node dependencies..."
+(cd gateway && npm install --silent 2>/dev/null) || true
+(cd evolution && npm install --silent 2>/dev/null) || true
+(cd orchestrator && npm install --silent 2>/dev/null) || true
+
+# 4. Re-initialize hierarchy (adds new teams/templates without losing data)
+echo "[4/4] Updating hierarchy (new teams and templates)..."
+YAML_CONFIG="config/managesim.yaml"
+if [ -f "$YAML_CONFIG" ]; then
+    python3 -c "
+import yaml, sys
+sys.path.insert(0, '.')
+from knowledge.easybase_bridge import EasybaseBridge
+from knowledge.hierarchy_init import init_full_hierarchy
+
+with open('$YAML_CONFIG') as f:
+    config = yaml.safe_load(f)
+
+bridge = EasybaseBridge()
+init_full_hierarchy(bridge, config)
+print('  Hierarchy updated')
+" 2>/dev/null || echo "  Hierarchy init skipped (dependencies not ready)"
+else
+    echo "  No personal config — skipping hierarchy update"
+fi
+
+echo ""
+echo "╔══════════════════════════════════════╗"
+echo "║       Update complete!               ║"
+echo "╚══════════════════════════════════════╝"
+echo ""
+
+# Re-link the update command in case the script itself was updated
+chmod +x "$MANAGESIM_DIR/scripts/update-managesim"
+if [ -L /usr/local/bin/update-managesim ]; then
+    ln -sf "$MANAGESIM_DIR/scripts/update-managesim" /usr/local/bin/update-managesim
+elif [ -L "$HOME/.local/bin/update-managesim" ]; then
+    ln -sf "$MANAGESIM_DIR/scripts/update-managesim" "$HOME/.local/bin/update-managesim"
+fi

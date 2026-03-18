@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ──────────────────────────────────────────────────
+# install-managesim
+#
+# Download and set up ManageSim from scratch.
+#
+# Usage:
+#   curl -sSL https://raw.githubusercontent.com/superyicheng/ManageSim/main/scripts/install-managesim | bash
+#
+# Or install to a specific directory:
+#   curl -sSL https://raw.githubusercontent.com/superyicheng/ManageSim/main/scripts/install-managesim | bash -s ~/projects
+# ──────────────────────────────────────────────────
+
+REPO="https://github.com/superyicheng/ManageSim.git"
+INSTALL_DIR="${1:-$HOME/ManageSim}"
+CONFIG_FILE="$HOME/.managesim"
+
+echo ""
+echo "╔══════════════════════════════════════╗"
+echo "║       ManageSim — Install            ║"
+echo "╚══════════════════════════════════════╝"
+echo ""
+
+# Check dependencies
+missing=()
+command -v git   &>/dev/null || missing+=("git")
+command -v python3 &>/dev/null || missing+=("python3")
+command -v pip   &>/dev/null || missing+=("pip")
+command -v node  &>/dev/null || missing+=("node")
+command -v npm   &>/dev/null || missing+=("npm")
+
+if [ ${#missing[@]} -gt 0 ]; then
+    echo "Missing required tools: ${missing[*]}"
+    echo "Install them first, then re-run this script."
+    exit 1
+fi
+
+# Clone
+if [ -d "$INSTALL_DIR" ]; then
+    echo "Directory already exists: $INSTALL_DIR"
+    echo "To update instead, run: update-managesim"
+    exit 1
+fi
+
+echo "[1/6] Cloning ManageSim..."
+git clone "$REPO" "$INSTALL_DIR"
+cd "$INSTALL_DIR"
+
+# Install Python deps
+echo "[2/6] Installing Python dependencies..."
+pip install -q -r pipeline/requirements.txt
+pip install -q -r knowledge/requirements.txt
+pip install -q -r asset_base/requirements.txt
+pip install -q -r tools/requirements.txt 2>/dev/null || true
+
+# Install Node deps
+echo "[3/6] Installing Node dependencies..."
+(cd gateway && npm install --silent 2>/dev/null) || true
+(cd evolution && npm install --silent 2>/dev/null) || true
+(cd orchestrator && npm install --silent 2>/dev/null) || true
+
+# Create data directory
+echo "[4/6] Creating data directory..."
+mkdir -p data
+
+# Save install path so update-managesim knows where to find it
+echo "[5/6] Saving install path..."
+echo "$INSTALL_DIR" > "$CONFIG_FILE"
+
+# Install update command
+echo "[6/6] Installing update-managesim command..."
+chmod +x "$INSTALL_DIR/scripts/update-managesim"
+
+if [ -d /usr/local/bin ] && [ -w /usr/local/bin ]; then
+    ln -sf "$INSTALL_DIR/scripts/update-managesim" /usr/local/bin/update-managesim
+    echo "  Installed: update-managesim (in /usr/local/bin)"
+elif [ -d "$HOME/.local/bin" ]; then
+    ln -sf "$INSTALL_DIR/scripts/update-managesim" "$HOME/.local/bin/update-managesim"
+    echo "  Installed: update-managesim (in ~/.local/bin)"
+else
+    mkdir -p "$HOME/.local/bin"
+    ln -sf "$INSTALL_DIR/scripts/update-managesim" "$HOME/.local/bin/update-managesim"
+    echo "  Installed: update-managesim (in ~/.local/bin)"
+    echo "  Add to PATH if needed: export PATH=\"\$HOME/.local/bin:\$PATH\""
+fi
+
+echo ""
+echo "╔══════════════════════════════════════╗"
+echo "║       Install complete!              ║"
+echo "╚══════════════════════════════════════╝"
+echo ""
+echo "ManageSim is at: $INSTALL_DIR"
+echo ""
+echo "Next steps:"
+echo "  cd $INSTALL_DIR"
+echo "  ./scripts/init-personal.sh        # create your config"
+echo "  \$EDITOR config/managesim.yaml     # add Discord IDs"
+echo "  \$EDITOR .env                      # add API keys"
+echo "  ./scripts/init-hierarchy.sh       # bootstrap teams"
+echo ""
+echo "To update later:  update-managesim"
