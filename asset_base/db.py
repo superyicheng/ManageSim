@@ -44,7 +44,10 @@ class Database:
                     cost REAL DEFAULT 0.0,
                     tokens_used INTEGER DEFAULT 0,
                     success INTEGER,
-                    tags TEXT DEFAULT ''
+                    tags TEXT DEFAULT '',
+                    parent_task TEXT DEFAULT '',
+                    sub_tasks TEXT DEFAULT '[]',
+                    brief TEXT DEFAULT ''
                 );
 
                 CREATE TABLE IF NOT EXISTS skills (
@@ -138,6 +141,7 @@ class Database:
 
                 CREATE INDEX IF NOT EXISTS idx_tasks_project ON tasks(project_id);
                 CREATE INDEX IF NOT EXISTS idx_tasks_state ON tasks(state);
+                CREATE INDEX IF NOT EXISTS idx_tasks_parent ON tasks(parent_task);
                 CREATE INDEX IF NOT EXISTS idx_skills_level ON skills(level, level_id);
                 CREATE INDEX IF NOT EXISTS idx_agents_project ON agents(project_id);
                 CREATE INDEX IF NOT EXISTS idx_agents_team ON agents(team_id);
@@ -147,6 +151,17 @@ class Database:
                 CREATE INDEX IF NOT EXISTS idx_error_reports_project ON error_reports(project_id);
                 CREATE INDEX IF NOT EXISTS idx_qa_results_task ON qa_results(task_id);
             """)
+
+            # Migrate: add delegation columns to existing tasks table
+            for col, default in [
+                ("parent_task", "''"),
+                ("sub_tasks", "'[]'"),
+                ("brief", "''"),
+            ]:
+                try:
+                    conn.execute(f"ALTER TABLE tasks ADD COLUMN {col} TEXT DEFAULT {default}")
+                except sqlite3.OperationalError:
+                    pass  # Column already exists
 
     # --- Tasks ---
     def create_task(self, task_dict):
@@ -180,6 +195,14 @@ class Database:
             sets = ", ".join(f"{k} = ?" for k in updates.keys())
             values = list(updates.values()) + [task_id]
             conn.execute(f"UPDATE tasks SET {sets} WHERE id = ?", values)
+
+    def get_sub_tasks(self, parent_id):
+        """Get all sub-tasks for a parent task."""
+        with self._conn() as conn:
+            rows = conn.execute(
+                "SELECT * FROM tasks WHERE parent_task = ?", (parent_id,)
+            ).fetchall()
+            return [dict(r) for r in rows]
 
     # --- Skills ---
     def create_skill(self, skill_dict):

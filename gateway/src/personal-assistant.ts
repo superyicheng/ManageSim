@@ -114,7 +114,43 @@ export class PersonalAssistant {
     );
 
     if (project) {
-      await msg.reply(`This is the ${project.name} channel. The project bot should handle this.`);
+      // Create a task from the user's message and route to the leader
+      try {
+        const baseUrl = 'http://localhost:8100';
+
+        // Create the task via Asset Base
+        const taskId = `${(project.id || project.name).toUpperCase().replace(/\s+/g, '-')}-${Date.now()}`;
+        const taskResponse = await axios.post(`${baseUrl}/api/tasks`, {
+          id: taskId,
+          project_id: project.id || project.name,
+          title: content.substring(0, 80),
+          description: content,
+          state: 'Inbox',
+          pipeline: 'default',
+          priority: 'normal',
+        });
+
+        // Find the leader agent for this project
+        const agentsResponse = await axios.get(`${baseUrl}/api/agents`, {
+          params: { project: project.id || project.name },
+        });
+        const agents = agentsResponse.data || [];
+        const leader = agents.find((a: any) => a.role === 'leader' && a.status === 'active');
+
+        if (leader) {
+          await msg.reply(
+            `Task created: \`${taskId}\`\nRouting to leader **${leader.name}** for analysis and delegation.`
+          );
+        } else {
+          await msg.reply(
+            `Task created: \`${taskId}\`\nNo leader found — task is in Inbox for manual triage.`
+          );
+        }
+      } catch (error) {
+        await msg.reply(
+          `I received your request for ${project.name}. Could not create task — is the Asset Base running?`
+        );
+      }
     } else {
       await msg.reply('How can I help? Try `!tasks`, `!skills`, `!stats`, or `create department "Name"`. I work in all channels!');
     }

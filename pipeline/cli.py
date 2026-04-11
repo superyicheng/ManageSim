@@ -163,6 +163,23 @@ def transition(task_id, target_state, reason, agent):
     _save_task(task_id, task)
     click.echo(f"Transitioned: {task_id} {current} → {target_state}")
 
+    # Cascade cancellation to sub-tasks
+    if target_state == "Cancelled" and task.get("sub_tasks"):
+        for sub_id in task["sub_tasks"]:
+            sub = _load_task(sub_id)
+            if sub and sub.get("state") not in ("Done", "Cancelled"):
+                sub["state"] = "Cancelled"
+                sub["updated_at"] = datetime.now(timezone.utc).isoformat()
+                sub["history"].append({
+                    "from_state": sub.get("state", "unknown"),
+                    "to_state": "Cancelled",
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "reason": f"Parent {task_id} cancelled",
+                    "agent": agent,
+                })
+                _save_task(sub_id, sub)
+                click.echo(f"  Cascade cancelled: {sub_id}")
+
 
 @cli.command()
 @click.argument("task_id")
@@ -199,12 +216,25 @@ def progress(task_id, text, checklist, tokens, cost, elapsed, agent):
 @click.argument("summary")
 @click.option("--artifacts", default="", help="Path to output artifacts")
 @click.option("--agent", default="")
-def done(task_id, summary, artifacts, agent):
+@click.option("--check-children", is_flag=True, help="Warn if sub-tasks are not Done")
+def done(task_id, summary, artifacts, agent, check_children):
     """Complete a task."""
     task = _load_task(task_id)
     if not task:
         click.echo(f"ERROR: Task {task_id} not found", err=True)
         sys.exit(1)
+
+    # Check sub-task completion if requested
+    if check_children and task.get("sub_tasks"):
+        incomplete = []
+        for sub_id in task["sub_tasks"]:
+            sub = _load_task(sub_id)
+            if sub and sub.get("state") != "Done":
+                incomplete.append(f"  {sub_id} [{sub['state']}] {sub.get('title', '')}")
+        if incomplete:
+            click.echo(f"WARNING: {len(incomplete)} sub-task(s) not Done:", err=True)
+            for line in incomplete:
+                click.echo(line, err=True)
 
     sm = _load_pipeline(task["pipeline"])
     current = task["state"]
@@ -233,6 +263,106 @@ def done(task_id, summary, artifacts, agent):
     })
     _save_task(task_id, task)
     click.echo(f"Completed: {task_id}")
+
+
+@cli.command()
+@click.argument("parent_task_id")
+@click.option("--title", required=True, help="Sub-task title")
+@click.option("--summary", required=True, help="Brief: what the worker needs to do")
+@click.option("--background", default="", help="Brief: project context (max 2000 chars)")
+@click.option("--requirements", default="", help="Brief: acceptance criteria")
+@click.option("--constraints", default="", help="Brief: boundaries and limitations")
+@click.option("--references", default="", help="Brief: pipe-delimited chunk IDs or paths")
+@click.option("--assign-to", default="", help="Worker agent to assign to")
+@click.option("--priority", default="normal", type=click.Choice(["low", "normal", "high", "urgent"]))
+def delegate(parent_task_id, title, summary, background, requirements, constraints, references, assign_to, priority):
+    """Create a sub-task with a complete brief from a parent task.
+
+    The leader uses this to delegate work to workers. Each sub-task includes
+    a self-contained brief with all context the worker needs.
+    """
+    parent = _load_task(parent_task_id)
+    if not parent:
+        click.echo(f"ERROR: Parent task {parent_task_id} not found", err=True)
+        sys.exit(1)
+
+    # Parent must be in an active planning/execution state
+    allowed_states = {"Planning", "Review", "Assigned", "Executing"}
+    if parent["state"] not in allowed_states:
+        click.echo(
+            f"ERROR: Cannot delegate from state '{parent['state']}'. "
+            f"Allowed: {sorted(allowed_states)}",
+            err=True,
+        )
+        sys.exit(1)
+
+    # Prevent nested delegation (max 1 level deep)
+    if parent.get("parent_task"):
+        click.echo("ERROR: Cannot delegate from a sub-task. Only top-level tasks can be delegated.", err=True)
+        sys.exit(1)
+
+    clean_title, err = sanitize_title(title)
+    if err:
+        click.echo(f"ERROR: {err}", err=True)
+        sys.exit(1)
+
+    # Truncate background to 2000 chars
+    if len(background) > 2000:
+        background = background[:2000]
+        click.echo("WARNING: Background truncated to 2000 characters. Use --references for longer context.", err=True)
+
+    # Build the brief
+    ref_list = [r.strip() for r in references.split("|") if r.strip()] if references else []
+    brief = {
+        "summary": summary,
+        "background": background,
+        "requirements": requirements,
+        "constraints": constraints,
+        "references": ref_list,
+    }
+
+    # Create the sub-task
+    project = parent["project"]
+    pipeline = parent.get("pipeline", "default")
+    sub_task_id = _next_task_id(project)
+
+    sub_task = {
+        "id": sub_task_id,
+        "project": project,
+        "title": clean_title,
+        "description": summary,
+        "state": "Assigned",
+        "pipeline": pipeline,
+        "assigned_to": assign_to,
+        "priority": priority,
+        "parent_task": parent_task_id,
+        "brief": brief,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "progress": [],
+        "reviews": [],
+        "history": [
+            {
+                "from_state": None,
+                "to_state": "Assigned",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "reason": f"Delegated from {parent_task_id} by leader",
+            }
+        ],
+    }
+    _save_task(sub_task_id, sub_task)
+
+    # Update parent with sub-task link
+    if "sub_tasks" not in parent:
+        parent["sub_tasks"] = []
+    parent["sub_tasks"].append(sub_task_id)
+    parent["updated_at"] = datetime.now(timezone.utc).isoformat()
+    _save_task(parent_task_id, parent)
+
+    click.echo(f"Delegated: {sub_task_id} (from {parent_task_id}) — {clean_title}")
+    click.echo(f"  Brief: {summary[:80]}")
+    if assign_to:
+        click.echo(f"  Assigned to: {assign_to}")
 
 
 @cli.command()

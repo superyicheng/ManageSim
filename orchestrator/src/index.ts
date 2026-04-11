@@ -31,6 +31,12 @@ class Orchestrator {
 
   /**
    * Dispatch a task to the appropriate team/agent via the execution layer.
+   *
+   * Routing logic:
+   * - Explicit agentId → use that agent
+   * - Sub-task (has parent_task) → route to assigned worker or best available worker
+   * - Top-level task → route to the project's leader for analysis and delegation
+   * - Fallback → highest success_rate agent
    */
   async dispatchTask(taskId: string, projectId: string, agentId?: string): Promise<any> {
     try {
@@ -44,22 +50,39 @@ class Orchestrator {
       });
       const agents = agentsResponse.data || [];
 
-      // Select agent (specified or best match)
       let targetAgent;
+
       if (agentId) {
+        // Explicit agent specified
         targetAgent = agents.find((a: any) => a.id === agentId);
+      } else if (task.parent_task) {
+        // Sub-task created by leader — route to assigned worker or best available worker
+        if (task.assigned_to) {
+          targetAgent = agents.find((a: any) => a.id === task.assigned_to);
+        }
+        if (!targetAgent) {
+          targetAgent = agents
+            .filter((a: any) => a.status === 'active' && a.role === 'worker')
+            .sort((a: any, b: any) => (b.success_rate || 0) - (a.success_rate || 0))[0];
+        }
       } else {
-        // Pick the active agent with highest success rate
-        targetAgent = agents
-          .filter((a: any) => a.status === 'active')
-          .sort((a: any, b: any) => (b.success_rate || 0) - (a.success_rate || 0))[0];
+        // Top-level task — route to leader first for analysis and delegation
+        targetAgent = agents.find(
+          (a: any) => a.status === 'active' && a.role === 'leader'
+        );
+        if (!targetAgent) {
+          // Fallback: pick by success rate (original behavior)
+          targetAgent = agents
+            .filter((a: any) => a.status === 'active')
+            .sort((a: any, b: any) => (b.success_rate || 0) - (a.success_rate || 0))[0];
+        }
       }
 
       if (!targetAgent) {
         return { error: 'No available agent for task dispatch' };
       }
 
-      console.log(`[Orchestrator] Dispatching ${taskId} to ${targetAgent.id}`);
+      console.log(`[Orchestrator] Dispatching ${taskId} to ${targetAgent.id} (${targetAgent.role || 'unknown'})`);
 
       // Update task assignment
       await axios.patch(`${this.config.assetBaseUrl}/api/tasks/${taskId}`, {
@@ -72,6 +95,7 @@ class Orchestrator {
         task_id: taskId,
         agent_id: targetAgent.id,
         agent_name: targetAgent.name,
+        agent_role: targetAgent.role || 'unknown',
       };
     } catch (error: any) {
       console.error(`[Orchestrator] Dispatch error: ${error.message}`);

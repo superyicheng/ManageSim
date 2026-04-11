@@ -22,6 +22,9 @@ class Task:
     tokens_used: int = 0
     success: Optional[bool] = None
     tags: str = ""
+    parent_task: str = ""       # ID of parent task (empty if top-level)
+    sub_tasks: str = "[]"       # JSON array of child task IDs
+    brief: str = ""             # JSON string of TaskBrief
 
 
 @dataclass
@@ -98,6 +101,20 @@ class QAResult:
     test_coverage: str = ""
     structural_notes: str = ""
     created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+
+
+@dataclass
+class TaskBrief:
+    """Self-contained context package that a leader creates for a worker.
+
+    Workers receive ONLY this brief + their own skills/tools/soul.
+    The leader must include everything the worker needs to complete the task.
+    """
+    summary: str              # One-paragraph what-to-do
+    background: str = ""      # Project context the worker needs
+    requirements: str = ""    # Specific acceptance criteria
+    constraints: str = ""     # Boundaries (do NOT do X, use Y not Z)
+    references: str = "[]"    # JSON array of chunk IDs, file paths, or URLs
 
 
 @dataclass

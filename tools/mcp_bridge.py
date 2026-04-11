@@ -90,6 +90,94 @@ def task_show(task_id: str) -> str:
     return json.dumps(task, indent=2)
 
 
+def task_delegate(
+    parent_task_id: str,
+    title: str,
+    summary: str,
+    background: str = "",
+    requirements: str = "",
+    constraints: str = "",
+    references: str = "",
+    assign_to: str = "",
+) -> str:
+    """Create a sub-task with a complete brief from a parent task.
+
+    The leader uses this to delegate work to workers. Each sub-task includes
+    a self-contained brief with all context the worker needs.
+    """
+    parent = _load_task(parent_task_id)
+    if not parent:
+        return json.dumps({"error": f"Parent task {parent_task_id} not found"})
+
+    allowed_states = {"Planning", "Review", "Assigned", "Executing"}
+    if parent["state"] not in allowed_states:
+        return json.dumps({"error": f"Cannot delegate from state '{parent['state']}'"})
+
+    if parent.get("parent_task"):
+        return json.dumps({"error": "Cannot delegate from a sub-task"})
+
+    clean_title, err = sanitize_title(title)
+    if err:
+        return json.dumps({"error": err})
+
+    if len(background) > 2000:
+        background = background[:2000]
+
+    ref_list = [r.strip() for r in references.split("|") if r.strip()] if references else []
+    brief = {
+        "summary": summary,
+        "background": background,
+        "requirements": requirements,
+        "constraints": constraints,
+        "references": ref_list,
+    }
+
+    project = parent["project"]
+    pipeline = parent.get("pipeline", "default")
+    sub_task_id = _next_task_id(project)
+
+    from datetime import datetime
+    sub_task = {
+        "id": sub_task_id,
+        "project": project,
+        "title": clean_title,
+        "description": summary,
+        "state": "Assigned",
+        "pipeline": pipeline,
+        "assigned_to": assign_to,
+        "priority": parent.get("priority", "normal"),
+        "parent_task": parent_task_id,
+        "brief": brief,
+        "created_at": datetime.utcnow().isoformat(),
+        "updated_at": datetime.utcnow().isoformat(),
+        "progress": [],
+        "reviews": [],
+        "history": [
+            {
+                "from_state": None,
+                "to_state": "Assigned",
+                "timestamp": datetime.utcnow().isoformat(),
+                "reason": f"Delegated from {parent_task_id} by leader",
+            }
+        ],
+    }
+    _save_task(sub_task_id, sub_task)
+
+    if "sub_tasks" not in parent:
+        parent["sub_tasks"] = []
+    parent["sub_tasks"].append(sub_task_id)
+    parent["updated_at"] = datetime.utcnow().isoformat()
+    _save_task(parent_task_id, parent)
+
+    return json.dumps({
+        "status": "delegated",
+        "sub_task_id": sub_task_id,
+        "parent_task_id": parent_task_id,
+        "title": clean_title,
+        "assigned_to": assign_to,
+    })
+
+
 # MCP server setup (if fastmcp available)
 def create_mcp_server():
     """Create MCP server exposing ManageSim tools."""
@@ -120,6 +208,20 @@ def create_mcp_server():
     def managesim_task_show(task_id: str) -> str:
         """Show task details."""
         return task_show(task_id)
+
+    @mcp.tool()
+    def managesim_task_delegate(
+        parent_task_id: str,
+        title: str,
+        summary: str,
+        background: str = "",
+        requirements: str = "",
+        constraints: str = "",
+        references: str = "",
+        assign_to: str = "",
+    ) -> str:
+        """Delegate a sub-task from a parent task with a complete brief for the worker."""
+        return task_delegate(parent_task_id, title, summary, background, requirements, constraints, references, assign_to)
 
     return mcp
 

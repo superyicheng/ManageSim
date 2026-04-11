@@ -60,6 +60,21 @@ def get_task(task_id: str):
         raise HTTPException(404, "Task not found")
     return task
 
+@app.patch("/api/tasks/{task_id}")
+def update_task(task_id: str, updates: dict):
+    task = db.get_task(task_id)
+    if not task:
+        raise HTTPException(404, "Task not found")
+    db.update_task(task_id, updates)
+    return {"status": "updated", "id": task_id}
+
+@app.get("/api/tasks/{task_id}/sub-tasks")
+def get_sub_tasks(task_id: str):
+    task = db.get_task(task_id)
+    if not task:
+        raise HTTPException(404, "Task not found")
+    return db.get_sub_tasks(task_id)
+
 
 # --- Skills ---
 @app.get("/api/skills")
